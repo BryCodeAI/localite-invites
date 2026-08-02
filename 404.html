@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Join a Localité group</title>
+    <style>
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f6f8fb; color: #172033; font: 16px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      main { max-width: 32rem; padding: 2.5rem; text-align: center; }
+      h1 { font-size: 2rem; margin: 0 0 1rem; }
+      p { line-height: 1.55; margin: 0 0 1.5rem; }
+      button { border: 0; border-radius: .8rem; background: #172033; color: white; cursor: pointer; font: inherit; font-weight: 700; padding: .95rem 1.25rem; }
+      .hidden { display: none; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Join a Localité group</h1>
+      <p id="message">Preparing your invitation…</p>
+      <button id="install" class="hidden" type="button">Get Localité</button>
+    </main>
+    <script>
+      const playPackage = 'com.localitylocalite.app';
+      // Set this once the App Store listing is approved. Leave blank to show the iOS coming-soon message.
+      const appStoreUrl = '';
+      const tokenMatch = window.location.pathname.match(/^\/invite\/group\/([^/]+)\/?$/);
+      const token = tokenMatch ? decodeURIComponent(tokenMatch[1]) : '';
+      const message = document.getElementById('message');
+      const install = document.getElementById('install');
+
+      if (!token) {
+        message.textContent = 'This group invitation is invalid.';
+      } else if (/Android/i.test(navigator.userAgent)) {
+        const referrer = encodeURIComponent(`group_invite_token=${encodeURIComponent(token)}`);
+        window.location.replace(`https://play.google.com/store/apps/details?id=${playPackage}&referrer=${referrer}`);
+      } else if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        if (!appStoreUrl) {
+          message.textContent = 'Localité for iPhone is coming soon. Your group invitation will still work once the app is available.';
+        } else {
+          message.textContent = 'Install Localité, then use “Paste invite link” when the app opens.';
+          install.classList.remove('hidden');
+          install.addEventListener('click', async () => {
+            try { await navigator.clipboard.writeText(window.location.href); } catch (_) { /* The app also offers a re-tap fallback. */ }
+            window.location.assign(appStoreUrl);
+          });
+        }
+      } else {
+        message.textContent = 'Open this invitation on your Android phone or iPhone to join the group.';
+      }
+    </script>
+  </body>
+</html>
