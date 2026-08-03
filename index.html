@@ -10,6 +10,7 @@
       h1 { font-size: 2rem; margin: 0 0 1rem; }
       p { line-height: 1.55; margin: 0 0 1.5rem; }
       button { border: 0; border-radius: .8rem; background: #172033; color: white; cursor: pointer; font: inherit; font-weight: 700; padding: .95rem 1.25rem; }
+      button + button { background: #e2e8f0; color: #172033; margin-top: .75rem; }
       .hidden { display: none; }
     </style>
   </head>
@@ -17,6 +18,7 @@
     <main>
       <h1>Join a Localité group</h1>
       <p id="message">Preparing your invitation…</p>
+      <button id="open-app" class="hidden" type="button">Open Localité</button>
       <button id="install" class="hidden" type="button">Get Localité</button>
     </main>
     <script>
@@ -26,6 +28,7 @@
       const tokenMatch = window.location.pathname.match(/^\/invite\/group\/([^/]+)\/?$/);
       const token = tokenMatch ? decodeURIComponent(tokenMatch[1]) : '';
       const message = document.getElementById('message');
+      const openApp = document.getElementById('open-app');
       const install = document.getElementById('install');
 
       if (!token) {
@@ -34,10 +37,14 @@
         const referrer = encodeURIComponent(`group_invite_token=${encodeURIComponent(token)}`);
         window.location.replace(`https://play.google.com/store/apps/details?id=${playPackage}&referrer=${referrer}`);
       } else if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        openApp.classList.remove('hidden');
+        openApp.addEventListener('click', () => {
+          window.location.assign(`localityspike://invite/group/${encodeURIComponent(token)}`);
+        });
         if (!appStoreUrl) {
-          message.textContent = 'Localité for iPhone is coming soon. Your group invitation will still work once the app is available.';
+          message.textContent = 'Already have Localité installed? Open your group below. Localité for new iPhone users is coming soon.';
         } else {
-          message.textContent = 'Install Localité, then use “Paste invite link” when the app opens.';
+          message.textContent = 'Already have Localité? Open your group below. Otherwise, install it and use “Paste invite link” when the app opens.';
           install.classList.remove('hidden');
           install.addEventListener('click', async () => {
             try { await navigator.clipboard.writeText(window.location.href); } catch (_) { /* The app also offers a re-tap fallback. */ }
