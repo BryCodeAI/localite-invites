@@ -1,0 +1,10 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.localitylocalite.app",
+      "sha256_cert_fingerprints": ["04:0A:43:28:CC:A2:23:3E:9E:BD:2A:0F:59:81:42:5D:EE:C0:75:8B:F2:3C:BB:3F:C7:26:39:1F:B7:6E:EF:9E"]
+    }
+  }
+]
