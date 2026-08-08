@@ -3,7 +3,7 @@
     "details": [
       {
         "appID": "PA485LH8Y3.com.locality-localite.app",
-        "paths": ["/invite/group/*"]
+        "paths": ["/invite/group/*", "/invite/friend/*"]
       }
     ]
   }
