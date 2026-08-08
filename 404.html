@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Join a Localité group</title>
+    <title>Open Localité invite</title>
     <style>
       body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f6f8fb; color: #172033; font: 16px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
       main { max-width: 32rem; padding: 2.5rem; text-align: center; }
@@ -16,7 +16,7 @@
   </head>
   <body>
     <main>
-      <h1>Join a Localité group</h1>
+      <h1 id="title">Open Localité invite</h1>
       <p id="message">Preparing your invitation…</p>
       <button id="open-app" class="hidden" type="button">Open Localité</button>
       <button id="install" class="hidden" type="button">Get Localité</button>
@@ -24,57 +24,80 @@
     <script>
       const playPackage = 'com.localitylocalite.app';
       const appStoreUrl = 'https://apps.apple.com/us/app/localit%C3%A9/id6773537790';
-      const tokenMatch = window.location.pathname.match(/^\/invite\/group\/([^/]+)\/?$/);
-      const token = tokenMatch ? decodeURIComponent(tokenMatch[1]) : '';
+      const match = window.location.pathname.match(/^\/invite\/(group|friend)\/([^/]+)\/?$/);
+      const inviteType = match?.[1] || '';
+      const token = match?.[2] ? decodeURIComponent(match[2]) : '';
+      const title = document.getElementById('title');
       const message = document.getElementById('message');
       const openApp = document.getElementById('open-app');
       const install = document.getElementById('install');
 
-      if (!token) {
-        message.textContent = 'This group invitation is invalid.';
-      } else if (/Android/i.test(navigator.userAgent)) {
-        const referrer = encodeURIComponent(`group_invite_token=${encodeURIComponent(token)}`);
-        window.location.replace(`https://play.google.com/store/apps/details?id=${playPackage}&referrer=${referrer}`);
-      } else if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-        const appUrl = `localityspike://invite/group/${encodeURIComponent(token)}`;
-        let fallbackTimer = null;
+      if (!inviteType || !token) {
+        message.textContent = 'This Localité invitation is invalid.';
+      } else {
+        const isGroup = inviteType === 'group';
+        title.textContent = isGroup ? 'Join a Localité group' : 'Add a friend on Localité';
+        const appUrl = `localityspike://invite/${inviteType}/${encodeURIComponent(token)}`;
 
-        const openInstalledApp = () => {
+        if (/Android/i.test(navigator.userAgent)) {
+          // Android App Links should open the installed app before this page is shown.
+          // If the browser page is reached, try the existing custom scheme first,
+          // then fall back to Google Play.
+          let fallbackTimer = setTimeout(() => {
+            if (document.visibilityState === 'visible') {
+              const referrerKey = isGroup ? 'group_invite_token' : 'friend_invite_token';
+              const referrer = encodeURIComponent(`${referrerKey}=${encodeURIComponent(token)}`);
+              window.location.replace(`https://play.google.com/store/apps/details?id=${playPackage}&referrer=${referrer}`);
+            }
+          }, 1800);
+          document.addEventListener('visibilitychange', () => {
+            if (document.hidden && fallbackTimer) {
+              clearTimeout(fallbackTimer);
+              fallbackTimer = null;
+            }
+          });
           message.textContent = 'Opening Localité…';
           window.location.assign(appUrl);
-        };
+        } else if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+          let fallbackTimer = null;
 
-        const cancelFallback = () => {
-          if (fallbackTimer) {
-            clearTimeout(fallbackTimer);
-            fallbackTimer = null;
-          }
-        };
+          const cancelFallback = () => {
+            if (fallbackTimer) {
+              clearTimeout(fallbackTimer);
+              fallbackTimer = null;
+            }
+          };
 
-        document.addEventListener('visibilitychange', () => {
-          if (document.hidden) cancelFallback();
-        });
-        window.addEventListener('pagehide', cancelFallback);
+          const openInstalledApp = () => {
+            message.textContent = 'Opening Localité…';
+            window.location.assign(appUrl);
+          };
 
-        openApp.classList.remove('hidden');
-        install.classList.remove('hidden');
-        openApp.addEventListener('click', openInstalledApp);
-        install.addEventListener('click', async () => {
-          try { await navigator.clipboard.writeText(window.location.href); } catch (_) { /* Re-tapping the invite after install also works. */ }
-          window.location.assign(appStoreUrl);
-        });
+          document.addEventListener('visibilitychange', () => {
+            if (document.hidden) cancelFallback();
+          });
+          window.addEventListener('pagehide', cancelFallback);
 
-        message.textContent = 'Opening your group in Localité…';
-        fallbackTimer = setTimeout(() => {
-          if (document.visibilityState === 'visible') {
-            message.textContent = 'If Localité did not open, install it from the App Store.';
-            window.location.replace(appStoreUrl);
-          }
-        }, 1800);
+          openApp.classList.remove('hidden');
+          install.classList.remove('hidden');
+          openApp.addEventListener('click', openInstalledApp);
+          install.addEventListener('click', async () => {
+            try { await navigator.clipboard.writeText(window.location.href); } catch (_) { /* Re-tapping the invite after install also works. */ }
+            window.location.assign(appStoreUrl);
+          });
 
-        openInstalledApp();
-      } else {
-        message.textContent = 'Open this invitation on your Android phone or iPhone to join the group.';
+          message.textContent = 'Opening Localité…';
+          fallbackTimer = setTimeout(() => {
+            if (document.visibilityState === 'visible') {
+              message.textContent = 'If Localité did not open, install it from the App Store.';
+              window.location.replace(appStoreUrl);
+            }
+          }, 1800);
+
+          openInstalledApp();
+        } else {
+          message.textContent = 'Open this invitation on your Android phone or iPhone.';
+        }
       }
     </script>
   </body>
